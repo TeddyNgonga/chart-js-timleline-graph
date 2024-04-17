@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Time Series Graph</title>
+    <style>
+        .sliderX {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .sliderX::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100px;
+            height: 20px;
+            border-radius: 15%;
+            background: #2c8bf1;
+            cursor: pointer;
+        }
+
+        .sliderX::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2c8bf1;
+            cursor: pointer;
+        }
+
+        .sliderZ {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .sliderZ::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 20px;
+            border-radius: 15%;
+            background: #2c8bf1;
+            cursor: pointer;
+        }
+
+        .sliderZ::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2c8bf1;
+            cursor: pointer;
+        }
+
+        .playhead-info {
+            position: absolute;
+            top: 50px; /* Adjust position as needed */
+            left: 50px; /* Adjust position as needed */
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            display: none; /* Initially hide */
+        }
+    </style>
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div>
+        <div>
+            <form style="position: absolute; top: 5%;">
+                <label for="value1">Value #1:</label>
+                <input type="text" id="value1" name="value1"><br><br>
+                <label for="value2">Value #2:</label>
+                <input type="text" id="value2" name="value2"><br><br>
+                <label for="value3">Value #3:</label>
+                <input type="text" id="value3" name="value3"><br><br>
+            </form>
+        </div>
+        <div id="display" style="float: right; position: relative;">
+            <canvas id="timeSeriesChart" height="400" width="1200"></canvas>
+            <input id="zoomSlider" type="range" min="0" max="10" step="1" value="0" class="sliderZ"
+                style="width: 29%; margin-top: 10px; right: 0px; position: absolute;">
+            <input id="displacementSlider" type="range" min="1" max="10" step="1" value="0" class="sliderX"
+                style="width: 69%; margin-top: 10px; left: 0px; position: absolute;">
+            <div id="playheadInfo" class="playhead-info"></div>
+        </div>
+    </div>
+
+    <script>
+
+        const labels = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'];
+        let dataset1 = [65, 59, 80, 81, 56, 55, 40, 65, 59, 80, 81, 56, 55, 40]
+        let dataset2 = [73, 6, 10, 42, 94, 75, 22, 65, 59, 80, 81, 56, 55, 40]
+        let dataset3 = [13, 27, 30, 97, 99, 69, 73, 65, 59, 80, 81, 56, 55, 40]
+
+
+
+        // Create the chart
+        const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+        const timeSeriesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: [],
+                    data: [65, 59, 80, 81, 56, 55, 40, 65, 59, 80, 81, 56, 55, 40],
+                    borderColor: 'cyan',
+                    borderWidth: 1,
+                    fill: false,
+                    cubicInterpolationMode: 'monotone'
+                },
+                {
+                    label: [],
+                    data: [73, 6, 10, 42, 94, 75, 22, 65, 59, 80, 81, 56, 55, 40],
+                    borderColor: 'red',
+                    borderWidth: 1,
+                    fill: false,
+                    cubicInterpolationMode: 'stepped'
+                },
+                {
+                    label: [],
+                    data: [13, 27, 30, 97, 99, 69, 73, 65, 59, 80, 81, 56, 55, 40],
+                    borderColor: 'green',
+                    borderWidth: 1,
+                    fill: false
+
+                }]
+            },
+            options: {
+                responsive: true,
+                title: {
+                    display: true,
+                    text: 'Time Series Graph'
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        min: 0,
+                        stepSize: 1
+                    },
+                    y: {
+                        display: true
+                    }
+                }
+            }
+        });
+
+        // Create a draggable play head
+        const displayDiv = document.getElementById('display');
+        const mainChart = document.getElementById("timeSeriesChart")
+        const playHead = document.createElement('div');
+        playHead.id = 'playhead';
+        playHead.style.position = 'absolute';
+        playHead.style.height = mainChart.style.height;
+        playHead.style.borderLeft = '2px solid black';
+        playHead.style.left = mainChart.style.left + "32px";
+        playHead.style.top = "0";
+        playHead.style.cursor = "pointer"
+        playHead.style.pointerEvents = 'auto'; // Allow pointer events on the play head
+        displayDiv.appendChild(playHead);
+        
+
+        // Tip of playhead
+        const triangleTip = document.createElement("div");
+        triangleTip.id = "playhead_tip"
+        playHead.appendChild(triangleTip)
+
+        triangleTip.style.position = "absolute";
+        triangleTip.style.borderLeft = "8px solid transparent";
+        triangleTip.style.borderRight = "8px solid transparent";
+        triangleTip.style.borderTop = "12px solid black"
+
+        triangleTip.style.right = "-7px"
+
+        // Add dragging functionality
+        playhead.addEventListener('mousedown', startDragging);
+        document.addEventListener('mouseup', stopDragging);
+        document.addEventListener('mousemove', dragPlayHead);
+
+        let isDragging = false
+
+        function startDragging(e) {
+            isDragging = true;
+            playheadInfo.style.display = 'block'; // Show playhead info div when dragging starts
+        }
+
+        function stopDragging() {
+            isDragging = false;
+            playheadInfo.style.display = 'none'; // Hide playhead info div when dragging stops
+        }
+
+        const mouseXOffset = document.body.clientWidth - mainChart.clientWidth
+
+        // Function to interpolate values between data points
+        function interpolateValues(index, values) {
+            const prevIndex = Math.floor(index);
+            const nextIndex = Math.ceil(index);
+            const t = index - prevIndex;
+
+            // Interpolate values between the previous and next data points
+            const interpolatedValues = values.map((value, i) => {
+                const prevValue = timeSeriesChart.data.datasets[i].data[prevIndex];
+                const nextValue = timeSeriesChart.data.datasets[i].data[nextIndex];
+                return prevValue + (nextValue - prevValue) * t;
+            });
+
+            return interpolatedValues;
+        }
+
+
+        // Function to drag the play head
+        function dragPlayHead(event) {
+            if (isDragging) {
+                // Calculate the position of the play head relative to the chart
+                const rect = timeSeriesChart.canvas.getBoundingClientRect();
+                let x = event.clientX - rect.left;
+
+                // Ensure play head stays within the chart area
+                if (x < 0) {
+                    x = 0;
+                } else if (x > rect.width) {
+                    x = rect.width;
+                }
+
+                // Update the position of the play head
+                playHead.style.left = `${x}px`;
+
+                // Calculate the index corresponding to the position of the playhead
+                const index = (x / rect.width) * (labels.length - 1);
+                const sample = Math.floor(index)
+
+                // Get the values from the datasets at the calculated index
+                const values = timeSeriesChart.data.datasets.map(dataset => dataset.data[sample]);
+
+                // Update the input values in the form
+                document.getElementById('value1').value = values[0];
+                document.getElementById('value2').value = values[1];
+                document.getElementById("value3").value = values[2];
+
+                // Calculate time value based on index
+                const centisecond = Math.round((index - sample) * 60);
+                const time = `${String(sample).padStart(1, '0')}:${String(centisecond).padStart(1, '0')}`;
+
+                // Display time value of the playhead
+                playheadInfo.innerHTML = `Time: ${time}`;
+
+            }
+        }
+
+        // Add zoomfunctionality
+        zoomrangeSlider = document.getElementById("zoomSlider");
+        zoomrangeSlider.addEventListener("input", updateZoom)
+
+
+        function updateZoom() {
+            // Get the zoom level from the zoomSlider value
+            const zoomLevel = parseInt(zoomrangeSlider.value);
+
+            // Update the chart's scale options
+            timeSeriesChart.options.scales.x.min = zoomLevel; // Adjust min
+
+            // Update the chart
+            timeSeriesChart.update();
+        }
+
+        // Add zoomfunctionality
+        displacementSlider = document.getElementById("displacementSlider");
+        displacementSlider.addEventListener("input", updateChart)
+
+        // Function to update the chart based on displacement slider
+        function updateChart() {
+            const displacement = parseInt(displacementSlider.value);
+            const startIndex = Math.max(0, displacement - 1);
+            const endIndex = labels.length; 
+
+            // Update the chart's data with the selected range
+            timeSeriesChart.data.labels = labels.slice(startIndex, endIndex);
+            timeSeriesChart.data.datasets.forEach((dataset, index) => {
+                dataset.data = getDatasetByIndex(index).slice(startIndex, endIndex);
+            });
+
+            // Update the chart
+            timeSeriesChart.update();
+        }
+
+        // Function to get dataset by index
+        function getDatasetByIndex(index) {
+            switch (index) {
+                case 0:
+                    return dataset1;
+                case 1:
+                    return dataset2;
+                case 2:
+                    return dataset3;
+                default:
+                    return [];
+            }
+        }
+
+    </script>
+</body>
+
+</html>
