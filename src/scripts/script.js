@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function() {
     playHead.style.position = "absolute";
     playHead.style.height = mainChart.style.height;
     playHead.style.borderLeft = "2px solid black";
-    playHead.style.left = mainChart.style.left + "32px";
+    playHead.style.left = "32px";
     playHead.style.top = "0";
     playHead.style.cursor = "pointer";
     playHead.style.pointerEvents = "auto"; 
@@ -109,9 +109,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const displacementSlider = document.getElementById("displacementSlider");
     displacementSlider.addEventListener("input", updateChart);
 
+
     function updateChart() {
-        const displacement = parseInt(displacementSlider.value);
-        const startIndex = Math.max(0, displacement - 1);
+        const startIndex = parseInt(displacementSlider.value);
         const endIndex = labels.length;
         timeSeriesChart.data.labels = labels.slice(startIndex, endIndex);
         timeSeriesChart.data.datasets.forEach((dataset, index) => {
